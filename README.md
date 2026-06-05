@@ -13,6 +13,12 @@ Frontend application for Mini E-Wallet built with React and Vite.
 
 ## Installation
 
+## Clone Repository
+
+```bash
+git clone https://github.com/Oradra19/mywallet.git
+```
+
 ### 1. Install Dependencies
 
 ```bash
