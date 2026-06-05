@@ -57,6 +57,18 @@ function normalizeTransaction(transaction) {
   }
 }
 
+function formatCurrencyInput(value) {
+  const numericValue = value.replace(/\D/g, '')
+
+  if (!numericValue) {
+    return ''
+  }
+
+  return new Intl.NumberFormat('id-ID').format(
+    Number(numericValue)
+  )
+}
+
 function useWallet() {
   const [currentUser, setCurrentUser] = useState(() => getStoredUser())
   const [transactions, setTransactions] = useState(() => getStoredTransactions())
@@ -68,6 +80,7 @@ function useWallet() {
   const [statusMessage, setStatusMessage] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
 
   async function refreshWalletData(user = currentUser) {
     const [balanceResponse, transactionResponse] = await Promise.all([
@@ -147,18 +160,29 @@ function useWallet() {
 
 
   const updateTransferField = (event) => {
-    const { name, value } = event.target
+  const { name, value } = event.target
 
+  if (name === 'amount') {
+    const formattedValue = formatCurrencyInput(value)
+
+    setFormValues((currentValues) => ({
+      ...currentValues,
+      amount: formattedValue,
+    }))
+  } else {
     setFormValues((currentValues) => ({
       ...currentValues,
       [name]: value,
     }))
-    setFormErrors((currentErrors) => ({
-      ...currentErrors,
-      [name]: '',
-    }))
-    setStatusMessage(null)
   }
+
+  setFormErrors((currentErrors) => ({
+    ...currentErrors,
+    [name]: '',
+  }))
+
+  setStatusMessage(null)
+}
 
   const submitTransfer = async (event) => {
     event.preventDefault()
@@ -172,7 +196,9 @@ function useWallet() {
     }
 
     const nextErrors = validateTransfer({
-      amount: formValues.amount,
+  amount: Number(
+    formValues.amount.replace(/\./g, '')
+  ),
       currentBalance: currentUser.balance,
       recipientId: formValues.recipientId,
       userId: currentUser.id,
@@ -197,51 +223,71 @@ function useWallet() {
       })
       return
     }
-
-    setIsSubmitting(true)
-
-    try {
-      const response = await transferService.createTransfer({
-        receiver_id: Number(formValues.recipientId),
-        amount: Number(formValues.amount),
-      })
-
-      await refreshWalletData(currentUser)
-      setFormValues({
-        amount: '',
-        recipientId: '',
-      })
-      setStatusMessage({
-        text: getResponseMessage(response, `Transfer to ${recipient.name} was successful.`),
-        type: 'success',
-      })
-    } catch (error) {
-      const message = getResponseMessage(
-        error.response?.data,
-        'Unable to complete transfer. Please try again.'
-      )
-
-      setStatusMessage({
-        text: message,
-        type: 'error',
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+    setIsConfirmModalOpen(true)
   }
 
-  return {
-    availableRecipients,
-    currentUser,
-    formErrors,
-    formValues,
-    isLoading,
-    isSubmitting,
-    statusMessage,
-    submitTransfer,
-    transactions: currentUserTransactions,
-    updateTransferField,
+
+  const confirmTransfer = async () => {
+  const recipient = users.find(
+    (user) => user.id === Number(formValues.recipientId)
+  )
+
+  setIsSubmitting(true)
+
+  try {
+    const response = await transferService.createTransfer({
+      receiver_id: Number(formValues.recipientId),
+      amount: Number(
+        formValues.amount.replace(/\./g, '')
+      ),
+    })
+
+    await refreshWalletData(currentUser)
+
+    setFormValues({
+      amount: '',
+      recipientId: '',
+    })
+
+    setStatusMessage({
+      text: getResponseMessage(
+        response,
+        `Transfer to ${recipient.name} was successful.`
+      ),
+      type: 'success',
+    })
+
+    setIsConfirmModalOpen(false)
+  } catch (error) {
+    const message = getResponseMessage(
+      error.response?.data,
+      'Unable to complete transfer. Please try again.'
+    )
+
+    setStatusMessage({
+      text: message,
+      type: 'error',
+    })
+  } finally {
+    setIsSubmitting(false)
   }
+}
+
+ return {
+  availableRecipients,
+  currentUser,
+  formErrors,
+  formValues,
+  isLoading,
+  isSubmitting,
+  statusMessage,
+  submitTransfer,
+  confirmTransfer,
+  isConfirmModalOpen,
+  setIsConfirmModalOpen,
+  transactions: currentUserTransactions,
+  updateTransferField,
+}
 }
 
 export default useWallet

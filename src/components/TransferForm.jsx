@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types'
 import Button from './ui/Button'
-import Input from './ui/Input'
 
 function TransferForm({
   amount,
@@ -12,19 +11,33 @@ function TransferForm({
   recipientId,
   statusMessage,
 }) {
-  const recipientMessageId = errors.recipientId ? 'recipientId-message' : undefined
+  const recipientMessageId = errors.recipientId
+    ? 'recipientId-message'
+    : undefined
 
   return (
-    <form className="space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm" onSubmit={onSubmit}>
+    <form
+      className="space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+      onSubmit={onSubmit}
+    >
       <div>
-        <h2 className="text-lg font-semibold text-slate-950">Transfer Funds</h2>
-        <p className="mt-1 text-sm text-slate-600">Send money to another mock wallet user.</p>
+        <h2 className="text-lg font-semibold text-slate-950">
+          Transfer Funds
+        </h2>
+
+        <p className="mt-1 text-sm text-slate-600">
+          Send money to another user.
+        </p>
       </div>
 
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-slate-700" htmlFor="recipientId">
+        <label
+          className="block text-sm font-medium text-slate-700"
+          htmlFor="recipientId"
+        >
           Recipient
         </label>
+
         <select
           aria-describedby={recipientMessageId}
           aria-invalid={Boolean(errors.recipientId)}
@@ -38,31 +51,83 @@ function TransferForm({
           onChange={onChange}
           value={recipientId}
         >
-          <option value="">Select recipient</option>
+          <option value="">
+            Select recipient
+          </option>
+
           {recipients.map((recipient) => (
-            <option key={recipient.id} value={recipient.id}>
+            <option
+              key={recipient.id}
+              value={recipient.id}
+            >
               {recipient.name} - {recipient.email}
             </option>
           ))}
         </select>
+
         {errors.recipientId ? (
-          <p className="text-sm text-red-600" id="recipientId-message">
+          <p
+            className="text-sm text-red-600"
+            id="recipientId-message"
+          >
             {errors.recipientId}
           </p>
         ) : null}
       </div>
 
-      <Input
-        error={errors.amount}
-        id="amount"
-        label="Amount"
-        min="1"
-        name="amount"
-        onChange={onChange}
-        placeholder="0"
-        type="number"
-        value={amount}
-      />
+      <div className="space-y-1.5">
+        <label
+          htmlFor="amount"
+          className="block text-sm font-medium text-slate-700"
+        >
+          Amount
+        </label>
+
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">
+            Rp
+          </span>
+
+          <input
+            id="amount"
+            name="amount"
+            type="text"
+            inputMode="numeric"
+            value={amount}
+            onChange={onChange}
+            placeholder="0"
+            className={`w-full rounded-md border py-2.5 pl-12 pr-3 text-sm shadow-sm outline-none transition focus:ring-2 ${
+              errors.amount
+                ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                : 'border-slate-300 focus:border-slate-900 focus:ring-slate-100'
+            }`}
+            onKeyDown={(event) => {
+              const allowedKeys = [
+                'Backspace',
+                'Delete',
+                'ArrowLeft',
+                'ArrowRight',
+                'Tab',
+                'Home',
+                'End',
+              ]
+
+              if (
+                !/[0-9]/.test(event.key) &&
+                !allowedKeys.includes(event.key)
+              ) {
+                event.preventDefault()
+              }
+            }}
+          />
+        </div>
+
+        {errors.amount ? (
+          <p className="text-sm text-red-600">
+            {errors.amount}
+          </p>
+        ) : null}
+      </div>
 
       {statusMessage ? (
         <p
@@ -76,8 +141,13 @@ function TransferForm({
         </p>
       ) : null}
 
-      <Button isLoading={isSubmitting} type="submit">
-        {isSubmitting ? 'Processing transfer' : 'Submit transfer'}
+      <Button
+        isLoading={isSubmitting}
+        type="submit"
+      >
+        {isSubmitting
+          ? 'Processing transfer'
+          : 'Submit transfer'}
       </Button>
     </form>
   )
@@ -102,7 +172,10 @@ TransferForm.propTypes = {
   ),
   statusMessage: PropTypes.shape({
     text: PropTypes.string.isRequired,
-    type: PropTypes.oneOf(['error', 'success']).isRequired,
+    type: PropTypes.oneOf([
+      'error',
+      'success',
+    ]).isRequired,
   }),
 }
 
